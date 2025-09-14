@@ -99,12 +99,22 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
+        FrameLayout container = findViewById(R.id.camera_container);
+
         // Initialize camera preview container
         cameraPreview = new PreviewView(this);
         cameraPreview.setLayoutParams(new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
         ));
+
+        if (container == null) {
+            Log.e("CameraX", "camera_container not found in layout!");
+        } else {
+            cameraPreview = new PreviewView(this);
+            container.addView(cameraPreview);
+            Log.d("CameraX", "PreviewView added to container");
+        }
 
 
         // Request camera permission
@@ -123,6 +133,11 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("TTS", "Language not supported!");
                 } else {
                     Log.d("TTS", "TTS initialized successfully");
+//                    tts.speak("Text to speech is working correctly",
+//                            TextToSpeech.QUEUE_FLUSH,
+//                            null,
+//                            "tts_init_test");
+
                 }
             } else {
                 Log.e("TTS", "Initialization failed");
@@ -135,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadObjectDetector() {
+        Log.d("Detector", "loadObjectDetector() called");
         try {
             ObjectDetector.ObjectDetectorOptions options =
                     ObjectDetector.ObjectDetectorOptions.builder()
@@ -144,8 +160,11 @@ public class MainActivity extends AppCompatActivity {
 
             objectDetector = ObjectDetector.createFromFileAndOptions(
                     this, "detect.tflite", options);
+            Log.d("Detector", "Object detector loaded");
+
         } catch (Exception e) {
             e.printStackTrace();
+            Log.e("Detector", "Failed to load detector: " + e.getMessage(), e);
         }
     }
 
@@ -180,6 +199,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void analyzeImage(ImageProxy imageProxy) {
+        Log.d("Analyzer", "analyzeImage called");
+        Log.d("Analyzer", "Frame received: " + imageProxy.getWidth() + "x" + imageProxy.getHeight());
         if (objectDetector == null || midasInterpreter == null) {
             imageProxy.close();
             return;
@@ -194,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
         TensorImage tensorImage = TensorImage.fromBitmap(bitmap);
 
         List<Detection> results = objectDetector.detect(tensorImage);
+        Log.d("TTS", "Detections found: " + results.size());
 
         // Run MiDaS for depth
         float[][] depthMap = runMiDaS(bitmap);
